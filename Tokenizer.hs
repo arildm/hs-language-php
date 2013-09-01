@@ -63,6 +63,7 @@ data PHPStmt = Seq [PHPStmt]
              | Echo [PHPExpr]
              | Global PHPVariable
              | Static [StaticVar]
+             | Exit
              deriving (Show)
 
 
@@ -73,7 +74,7 @@ langDef = emptyDef { Token.commentStart = "/*"
                    , Token.identLetter = alphaNum <|> char '_'
                    , Token.reservedNames = [ "if", "else", "elseif", "while", "break", "do", "for", "continue"
                                            , "true", "false", "null", "and", "or", "class", "function", "return"
-                                           , "<?php", "?>", "echo", "print"
+                                           , "<?php", "?>", "echo", "print", "exit"
                                            ]
                    , Token.reservedOpNames = [ "=", "==", "===", "->", ".", "+", "-", "*", "/", "%", "<", ">"
                                              , "and", "or", "||", "&&", "!", "++", "--" 
@@ -138,6 +139,7 @@ oneStatement = ifStmt
             <|> echoStmt
             <|> globalStmt
             <|> staticStmt
+            <|> exitStmt
             <|> stmtExpr
     -- Special case for an expression that's a statement
     -- Expressions can be used without a semicolon in the end in ifs or whatever, 
@@ -147,6 +149,12 @@ oneStatement = ifStmt
               phpEnd
               return $ Expression expr
 
+exitStmt :: Parser PHPStmt
+exitStmt = do
+        reserved "exit"
+        phpEnd
+        return Exit
+        
 staticStmt :: Parser PHPStmt
 staticStmt = do
         stmt <- reserved "static" >> (liftM Static $ sepBy staticArg (Token.symbol lexer ","))

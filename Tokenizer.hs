@@ -69,7 +69,7 @@ data PHPStmt = Seq [PHPStmt]
 
 langDef = emptyDef { Token.commentStart = "/*"
                    , Token.commentEnd = "*/"
-                   , Token.commentLine = "//"
+                   , Token.commentLine = "#"
                    , Token.identStart = letter
                    , Token.identLetter = alphaNum <|> char '_'
                    , Token.reservedNames = [ "if", "else", "elseif", "while", "break", "do", "for", "continue"
@@ -258,12 +258,22 @@ assignExpr = do
     return $ Assign var expr
 
 plainVariableExpr :: Parser PHPVariable
-plainVariableExpr = try varVarExpr <|> normalVariableExpr
-    where
-        varVarExpr = char '$' >> char '$' >> fmap PHPVariableVariable identifier
+plainVariableExpr = try arrayVariableExpr <|> try varVarExpr <|> try normalVariableExpr 
 
 normalVariableExpr :: Parser PHPVariable
 normalVariableExpr = char '$' >> fmap PHPVariable identifier
+
+varVarExpr :: Parser PHPVariable
+varVarExpr = char '$' >> char '$' >> fmap PHPVariableVariable identifier
+
+arrayVariableExpr :: Parser PHPVariable
+arrayVariableExpr = do 
+        char '$' 
+        var <- fmap PHPVariable identifier
+        char '['
+        innerVar <- stringTok --TODO somehow allow integer indices
+        char ']'
+        return var
 
 phpExpression :: Parser PHPExpr
 phpExpression = buildExpressionParser phpOperators phpTerm

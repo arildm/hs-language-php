@@ -70,7 +70,7 @@ data PHPStmt = Seq [PHPStmt]
 langDef = emptyDef { Token.commentStart = "/*"
                    , Token.commentEnd = "*/"
                    , Token.commentLine = "#"
-                   , Token.identStart = letter
+                   , Token.identStart = letter <|> char '_'
                    , Token.identLetter = alphaNum <|> char '_'
                    , Token.reservedNames = [ "if", "else", "elseif", "while", "break", "do", "for", "continue"
                                            , "true", "false", "null", "and", "or", "class", "function", "return"

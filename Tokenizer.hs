@@ -253,7 +253,9 @@ elseIfStmt = do
 assignExpr :: Parser PHPExpr
 assignExpr = do
     var <- plainVariableExpr
+    spaces
     reservedOp "="
+    spaces
     expr <- phpExpression
     return $ Assign var expr
 
@@ -270,9 +272,9 @@ arrayVariableExpr :: Parser PHPVariable
 arrayVariableExpr = do 
         char '$' 
         var <- fmap PHPVariable identifier
-        char '['
+        char '[' <|> char '{'
         innerVar <- stringTok --TODO somehow allow integer indices
-        char ']'
+        char ']' <|> char '}'
         return var
 
 phpExpression :: Parser PHPExpr

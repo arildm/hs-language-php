@@ -27,6 +27,7 @@ data PHPExpr = Literal PHPValue
              | UnaryExpr UnaryType UnaryOp PHPVariable
              | Call FunctionCall [PHPExpr]
              | Isset [PHPVariable]
+             | CastExpr 
              | Print PHPExpr
              deriving (Show)
 
@@ -250,11 +251,20 @@ elseIfStmt = do
     cont <- optionMaybe (elseIfStmt <|> elseStmt)
     return $ ElseIf cond stmt cont
 
+castExpr :: Parser PHPExpr
+castExpr = do
+    char '('
+    string "int"
+    char ')'
+    return CastExpr
+        
 assignExpr :: Parser PHPExpr
 assignExpr = do
     var <- plainVariableExpr
     spaces
     reservedOp "="
+    spaces
+    optional castExpr
     spaces
     expr <- phpExpression
     return $ Assign var expr

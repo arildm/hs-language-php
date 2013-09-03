@@ -84,7 +84,7 @@ langDef = emptyDef { Token.commentStart = "/*"
 
 lexer = Token.makeTokenParser langDef
 
-phpString = stringLit lexer '"' <|> stringLit lexer '\''
+phpString =  stringLit lexer '"' <|> stringLit lexer '\''
 
 identifier = Token.identifier lexer
 reserved = Token.reserved lexer
@@ -356,7 +356,32 @@ phpValue = (reserved "true" >> return (PHPBool True))
         <|> (reserved "false" >> return (PHPBool False))
         <|> (reserved "null" >> return PHPNull)
         <|> (Token.naturalOrFloat lexer >>= return . either PHPInt PHPFloat)
-        <|> (stringTok >>= return . PHPString)
+        <|> parsePhpStringDoubleQuotes
+        <|> parsePhpStringSingleQuotes
+
+-- following is based on http://codereview.stackexchange.com/questions/2406/parsing-strings-with-escaped-characters-using-parsec
+escaped = char '\\' >> choice (zipWith escapedChar codes replacements)
+escapedChar code replacement = char code >> return replacement
+codes        = ['b',  'n',  'f',  'r',  't',  '\\', '\"', '/', '\'']
+replacements = ['\b', '\n', '\f', '\r', '\t', '\\', '\"', '/', '\'']
+
+parsePhpStringDoubleQuotes :: Parser PHPValue
+parsePhpStringDoubleQuotes = do 
+       char '"'
+       x <- many chars
+       char '"'
+       return $ PHPString x 
+       where
+        chars = escaped <|> noneOf "\""
+
+parsePhpStringSingleQuotes :: Parser PHPValue
+parsePhpStringSingleQuotes = do 
+       char '\''
+       x <- many chars
+       char '\''
+       return $ PHPString x 
+       where
+        chars = escaped <|> noneOf "'"
 
 parseString :: String -> [ParseResult]
 parseString str = case parse whileParser "" str of

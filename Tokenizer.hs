@@ -74,7 +74,7 @@ langDef = emptyDef { Token.commentStart = "/*"
                    , Token.identStart = letter <|> char '_'
                    , Token.identLetter = alphaNum <|> char '_'
                    , Token.reservedNames = [ "if", "else", "elseif", "while", "break", "do", "for", "continue"
-                                           , "true", "false", "null", "and", "or", "class", "function", "return"
+                                           , "true", "false", "null", "NULL", "and", "or", "class", "function", "return"
                                            , "<?php", "?>", "echo", "print", "exit"
                                            ]
                    , Token.reservedOpNames = [ "=", "==", "===", "->", ".", "+", "-", "*", "/", "%", "<", ">"
@@ -355,6 +355,7 @@ phpValue :: Parser PHPValue
 phpValue = (reserved "true" >> return (PHPBool True))
         <|> (reserved "false" >> return (PHPBool False))
         <|> (reserved "null" >> return PHPNull)
+        <|> (reserved "NULL" >> return PHPNull)
         <|> (Token.naturalOrFloat lexer >>= return . either PHPInt PHPFloat)
         <|> parsePhpStringDoubleQuotes
         <|> parsePhpStringSingleQuotes

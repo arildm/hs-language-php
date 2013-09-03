@@ -27,6 +27,7 @@ data PHPExpr = Literal PHPValue
              | UnaryExpr UnaryType UnaryOp PHPVariable
              | Call FunctionCall [PHPExpr]
              | Isset [PHPVariable]
+             | Array (Maybe [PHPExpr])
              | CastExpr 
              | Print PHPExpr
              deriving (Show)
@@ -75,7 +76,7 @@ langDef = emptyDef { Token.commentStart = "/*"
                    , Token.identLetter = alphaNum <|> char '_'
                    , Token.reservedNames = [ "if", "else", "elseif", "while", "break", "do", "for", "continue"
                                            , "true", "false", "null", "NULL", "and", "or", "class", "function", "return"
-                                           , "<?php", "?>", "echo", "print", "exit"
+                                           , "<?php", "?>", "echo", "print", "exit", "array"
                                            ]
                    , Token.reservedOpNames = [ "=", "==", "===", "->", ".", "+", "-", "*", "/", "%", "<", ">"
                                              , "and", "or", "||", "&&", "!", "++", "--" 
@@ -305,6 +306,7 @@ phpOperators = [ [Infix (reservedOp "*" >> return (BinaryExpr Multiply)) AssocLe
                ]
 
 phpTerm = parens phpExpression
+       <|> try arrayExpr
        <|> try issetExpr
        <|> try printExpr
        <|> try functionCallExpr
@@ -318,6 +320,20 @@ issetExpr = do
     vars <- parens $ sepBy1 plainVariableExpr (Token.symbol lexer ",")
     return $ Isset vars
 
+arrayExpr :: Parser PHPExpr
+arrayExpr = do
+        reserved "array"
+        char '('
+        spaces
+        vars <- sepEndBy phpTerm ((Token.symbol lexer ",")>>spaces)
+        spaces
+        char ')'
+        spaces
+        if length vars > 0 then
+            return $ Array (Just vars)
+            else
+             return $ Array Nothing
+        
 variableExpr :: Parser PHPExpr
 variableExpr = do
         prefixOp <- unaryOp

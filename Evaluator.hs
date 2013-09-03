@@ -306,6 +306,8 @@ evalExpr (Isset vars) = liftM Literal $ isset vars
                        _ -> isset xs
 
 evalExpr (Print expr) = evalExpr expr >>= phpEcho . (:[]) . exprVal >> (return $ Literal $ PHPInt 1)
+evalExpr (Array (Just (e:es))) = undefined --TODO
+evalExpr (Array Nothing) = undefined --TODO
 
 varName :: PHPVariable -> PHPEval String
 varName (PHPVariable n) = return n

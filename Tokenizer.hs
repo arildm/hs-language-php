@@ -326,7 +326,7 @@ issetExpr = do
     return $ Isset vars
 
 arrayExpr :: Parser PHPExpr
-arrayExpr = do commaSepTerms
+arrayExpr = do try commaSepTerms <|> try arrowSepTerms
     where 
         commaSepTerms = do
                 reserved "array"
@@ -340,7 +340,29 @@ arrayExpr = do commaSepTerms
                   return $ Array $ PHPArray $ Map.fromList $ zip (map PHPArrayKeyInt [0..]) vars
                   else
                      return $ Array $ PHPArray $ Map.empty
+        arrowSepTerms = do
+                reserved "array"
+                char '('
+                spaces
+                vars <- sepEndBy arrayKeyValue (string "," >> spaces)
+                spaces
+                char ')'
+                spaces
+                if length vars > 0 then
+                  return $ Array $ PHPArray $ Map.fromList vars
+                  else
+                    return $ Array $ PHPArray $ Map.empty
         
+--arrayKeyValue :: Parser (String, PHPVariable)
+arrayKeyValue = do
+        spaces
+        s <- phpString
+        spaces
+        string "=>"
+        spaces
+        expr <- phpTerm 
+        return (PHPArrayKeyString s, expr)
+
 variableExpr :: Parser PHPExpr
 variableExpr = do
         prefixOp <- unaryOp

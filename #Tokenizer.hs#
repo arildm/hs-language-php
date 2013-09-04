@@ -11,7 +11,7 @@ import StringParse
 
 data PHPArrayKey = PHPArrayKeyString String
                 | PHPArrayKeyInt Int
-                deriving (Show, Ord, Eq)
+                deriving (Show)
                 
 data PHPValue = PHPString String
               | PHPInt Integer
@@ -20,7 +20,7 @@ data PHPValue = PHPString String
               | PHPNull
               deriving (Show)
 
-data PHPVariable = PHPVariable String | PHPVariableVariable String | PHPArray (Map.Map PHPArrayKey PHPExpr) deriving (Show)
+data PHPVariable = PHPVariable String | PHPVariableVariable String | PHPArray (Map.Map PHPArrayKey PHPExpr) String deriving (Show)
 data FunctionCall = FunctionCall String | FunctionCallVar PHPVariable deriving (Show)
 
 data PHPExpr = Literal PHPValue
@@ -337,9 +337,12 @@ arrayExpr = do commaSepTerms
                 char ')'
                 spaces
                 if length vars > 0 then
-                  return $ Array $ PHPArray $ Map.fromList $ zip (map PHPArrayKeyInt [0..]) vars
+                  return $ Array phparray
                   else
-                     return $ Array $ PHPArray $ Map.empty
+                     return $ Array Nothing
+                  where
+                    phparray = PHPArray arraymap
+                    arraymap =  Map.fromList . zip (fmap PHPArrayKeyInt) [0..]
         
 variableExpr :: Parser PHPExpr
 variableExpr = do

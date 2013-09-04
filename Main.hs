@@ -20,6 +20,7 @@ main =
         if length args > 0 
           then do
               ast <- liftM parseString $ readFile $ head args
+              print ast
               builtins <- newIORef $ VariableFunctions.functions ++ PhpInfoFunctions.functions ++ StringFunctions.functions
               config <- defaultConfig
               settings <- defaultSettings

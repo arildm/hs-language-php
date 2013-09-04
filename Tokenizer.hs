@@ -10,7 +10,7 @@ import qualified Data.Map as Map
 import StringParse
 
 data PHPArrayKey = PHPArrayKeyString String
-                | PHPArrayKeyInt Int
+                | PHPArrayKeyInt Integer
                 deriving (Show, Ord, Eq)
                 
 data PHPValue = PHPString String
@@ -20,7 +20,11 @@ data PHPValue = PHPString String
               | PHPNull
               deriving (Show)
 
-data PHPVariable = PHPVariable String | PHPVariableVariable String | PHPArray (Map.Map PHPArrayKey PHPExpr) deriving (Show)
+data PHPVariable = PHPVariable String 
+             | PHPVariableVariable String 
+             | PHPArray (Map.Map PHPArrayKey PHPExpr) 
+             | PHPArrayKeyReference PHPVariable PHPArrayKey 
+             deriving (Show)
 data FunctionCall = FunctionCall String | FunctionCallVar PHPVariable deriving (Show)
 
 data PHPExpr = Literal PHPValue
@@ -285,13 +289,22 @@ varVarExpr :: Parser PHPVariable
 varVarExpr = char '$' >> char '$' >> fmap PHPVariableVariable identifier
 
 arrayVariableExpr :: Parser PHPVariable
-arrayVariableExpr = do 
-        char '$' 
-        var <- fmap PHPVariable identifier
-        char '[' <|> char '{'
-        innerVar <- stringTok --TODO somehow allow integer indices
-        char ']' <|> char '}'
-        return var
+arrayVariableExpr = try arrayNumericIndex <|> try arrayStringIndex
+        where 
+          arrayStringIndex = do
+                char '$' 
+                key <- fmap PHPVariable identifier
+                char '[' <|> char '{'
+                arrayKey <- stringTok 
+                char ']' <|> char '}'
+                return $ PHPArrayKeyReference key (PHPArrayKeyString arrayKey)
+          arrayNumericIndex = do
+                char '$' 
+                key <- fmap PHPVariable identifier
+                char '[' <|> char '{'
+                arrayKey <- integer 
+                char ']' <|> char '}'
+                return $ PHPArrayKeyReference key (PHPArrayKeyInt arrayKey)
 
 phpExpression :: Parser PHPExpr
 phpExpression = buildExpressionParser phpOperators phpTerm

@@ -317,8 +317,8 @@ arrayVariableExpr = try arrayNumericIndex <|> try arrayStringIndex <|> try array
           arrayKeyEmptyIndex = do
                 char '$' 
                 key <- fmap PHPVariable identifier
-                char '[' <|> char '{'
-                char ']' <|> char '}'
+                char '['
+                char ']'
                 return $ PHPArrayAppend key 
                 
 

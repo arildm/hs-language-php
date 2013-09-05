@@ -7,6 +7,8 @@ import Text.ParserCombinators.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
 import qualified Text.ParserCombinators.Parsec.Token as Token
 import qualified Data.Map as Map
+import Data.List (nub)
+import Data.Char (isSpace)
 import StringParse
 
 data PHPArrayKey = PHPArrayKeyString String
@@ -24,6 +26,7 @@ data PHPVariable = PHPVariable String
              | PHPVariableVariable String 
              | PHPArray (Map.Map PHPArrayKey PHPExpr) 
              | PHPArrayKeyReference PHPVariable PHPArrayKey 
+             | PHPArrayAppend PHPVariable 
              deriving (Show)
 data FunctionCall = FunctionCall String | FunctionCallVar PHPVariable deriving (Show)
 
@@ -78,6 +81,7 @@ data PHPStmt = Seq [PHPStmt]
              deriving (Show)
 
 
+
 langDef = emptyDef { Token.commentStart = "/*"
                    , Token.commentEnd = "*/"
                    , Token.commentLine = "#"
@@ -85,7 +89,7 @@ langDef = emptyDef { Token.commentStart = "/*"
                    , Token.identLetter = alphaNum <|> char '_'
                    , Token.reservedNames = [ "if", "else", "elseif", "while", "break", "do", "for", "continue"
                                            , "true", "false", "null", "NULL", "and", "or", "class", "function", "return"
-                                           , "<?php", "?>", "echo", "print", "exit", "array"
+                                           , "<?php","<?", "?>", "echo", "print", "exit", "array"
                                            ]
                    , Token.reservedOpNames = [ "=", "==", "===", "->", ".", "+", "-", "*", "/", "%", "<", ">"
                                              , "and", "or", "||", "&&", "!", "++", "--" 
@@ -93,7 +97,7 @@ langDef = emptyDef { Token.commentStart = "/*"
                    }
 
 lexer = Token.makeTokenParser langDef
-
+  
 phpString =  stringLit lexer '"' <|> stringLit lexer '\''
 
 identifier = Token.identifier lexer
@@ -105,7 +109,12 @@ parens = Token.parens lexer
 braces = Token.braces lexer
 integer = Token.integer lexer
 semi = Token.semi lexer
-whiteSpace = Token.whiteSpace lexer
+
+altOneLineComment :: Parser ()
+altOneLineComment = do
+        try $ string $ "//"
+        skipMany (satisfy (/= '\n'))
+        return ()
 
 whileParser :: Parser [ParseResult]
 whileParser = many (parsePHPCode <|> parsePlainText)
@@ -117,12 +126,12 @@ phpEof = try $ do
 parsePlainText :: Parser ParseResult
 parsePlainText = liftM PlainText $ do
     c <- anyChar
-    har <- manyTill anyChar ((lookAhead $ reserved "<?php") <|> phpEof)
+    har <- manyTill anyChar ((lookAhead $ reserved "<?php") <|> phpEof <|> (lookAhead $ reserved "<?"))
     return (c : har)
 
 parsePHPCode :: Parser ParseResult
 parsePHPCode = do
-    reserved "<?php"
+    reserved "<?php" <|> reserved "<?"
     seq <- sequenceOfStmt
     (optional $ string "?>") <|> phpEof
     return $ PHPCode seq
@@ -289,7 +298,7 @@ varVarExpr :: Parser PHPVariable
 varVarExpr = char '$' >> char '$' >> fmap PHPVariableVariable identifier
 
 arrayVariableExpr :: Parser PHPVariable
-arrayVariableExpr = try arrayNumericIndex <|> try arrayStringIndex
+arrayVariableExpr = try arrayNumericIndex <|> try arrayStringIndex <|> try arrayKeyEmptyIndex 
         where 
           arrayStringIndex = do
                 char '$' 
@@ -305,6 +314,13 @@ arrayVariableExpr = try arrayNumericIndex <|> try arrayStringIndex
                 arrayKey <- integer 
                 char ']' <|> char '}'
                 return $ PHPArrayKeyReference key (PHPArrayKeyInt arrayKey)
+          arrayKeyEmptyIndex = do
+                char '$' 
+                key <- fmap PHPVariable identifier
+                char '[' <|> char '{'
+                char ']' <|> char '}'
+                return $ PHPArrayAppend key 
+                
 
 phpExpression :: Parser PHPExpr
 phpExpression = buildExpressionParser phpOperators phpTerm

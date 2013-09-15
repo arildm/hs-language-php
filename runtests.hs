@@ -61,6 +61,7 @@ testSuite = testGroup "Parser"
             , testCase "Unary prefix ops" (testFile "tests/unary_prefix_ops.php" (show $ [PHPCode (Seq [Expression (UnaryExpr Before Increment (PHPVariable "bar")),Expression (UnaryExpr Before Decrement (PHPVariable "foo"))])]))
             , testCase "Unary postfix ops" (testFile "tests/unary_postfix_ops.php" (show $ [PHPCode (Seq [Expression (UnaryExpr After Increment (PHPVariable "bar")),Expression (UnaryExpr After Decrement (PHPVariable "foo"))])]))
             , testCase "Short PHP open tag" (testFile "tests/short_open_tag.php" (show $ [PHPCode (Seq [Echo [Literal (PHPString "test")]])]))
+            , testCase "Append empty key to array" (testFile "tests/array_append_empty_key.php" (show $ [PHPCode (Seq [Expression (Assign (PHPArrayAppend (PHPVariable "a")) (Literal (PHPInt 1)))])]))
             ]
 
 testFile :: FilePath -> String -> IO ()

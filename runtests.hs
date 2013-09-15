@@ -3,6 +3,7 @@ module Main where
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
+import Data.Map (fromList)
 
 import Tokenizer
 
@@ -62,6 +63,7 @@ testSuite = testGroup "Parser"
             , testCase "Unary postfix ops" (testFile "tests/unary_postfix_ops.php" (show $ [PHPCode (Seq [Expression (UnaryExpr After Increment (PHPVariable "bar")),Expression (UnaryExpr After Decrement (PHPVariable "foo"))])]))
             , testCase "Short PHP open tag" (testFile "tests/short_open_tag.php" (show $ [PHPCode (Seq [Echo [Literal (PHPString "test")]])]))
             , testCase "Append empty key to array" (testFile "tests/array_append_empty_key.php" (show $ [PHPCode (Seq [Expression (Assign (PHPArrayAppend (PHPVariable "a")) (Literal (PHPInt 1)))])]))
+            , testCase "Array variable and string key" (testFile "tests/array_variable.php" (show $ [PHPCode (Seq [Expression (Assign (PHPVariable "a") (Array (PHPArray (fromList [])))),Expression (Assign (PHPArrayKeyReference (PHPVariable "a") (PHPArrayKeyString "test")) (Literal (PHPString "foo")))])]))
             ]
 
 testFile :: FilePath -> String -> IO ()

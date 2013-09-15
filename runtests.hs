@@ -64,6 +64,7 @@ testSuite = testGroup "Parser"
             , testCase "Short PHP open tag" (testFile "tests/short_open_tag.php" (show $ [PHPCode (Seq [Echo [Literal (PHPString "test")]])]))
             , testCase "Append empty key to array" (testFile "tests/array_append_empty_key.php" (show $ [PHPCode (Seq [Expression (Assign (PHPArrayAppend (PHPVariable "a")) (Literal (PHPInt 1)))])]))
             , testCase "Array variable and string key" (testFile "tests/array_variable.php" (show $ [PHPCode (Seq [Expression (Assign (PHPVariable "a") (Array (PHPArray (fromList [])))),Expression (Assign (PHPArrayKeyReference (PHPVariable "a") (PHPArrayKeyString "test")) (Literal (PHPString "foo")))])]))
+            , testCase "Array keys: both brace styles" (testFile "tests/both_array_brace_styles.php" (show $ [PHPCode (Seq [Expression (Assign (PHPArrayKeyReference (PHPVariable "a") (PHPArrayKeyString "foo")) (Literal (PHPString "bar"))),Expression (Assign (PHPArrayKeyReference (PHPVariable "a") (PHPArrayKeyString "foo")) (Literal (PHPString "bar")))])]))
             ]
 
 testFile :: FilePath -> String -> IO ()

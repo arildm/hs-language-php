@@ -66,6 +66,7 @@ testSuite = testGroup "Parser"
             , testCase "Array variable and string key" (testFile "tests/array_variable.php" (show $ [PHPCode (Seq [Expression (Assign (PHPVariable "a") (Array (PHPArray (fromList [])))),Expression (Assign (PHPArrayKeyReference (PHPVariable "a") (PHPArrayKeyString "test")) (Literal (PHPString "foo")))])]))
             , testCase "Array keys: both brace styles" (testFile "tests/both_array_brace_styles.php" (show $ [PHPCode (Seq [Expression (Assign (PHPArrayKeyReference (PHPVariable "a") (PHPArrayKeyString "foo")) (Literal (PHPString "bar"))),Expression (Assign (PHPArrayKeyReference (PHPVariable "a") (PHPArrayKeyString "foo")) (Literal (PHPString "bar")))])]))
             , testCase "Exit statement" (testFile "tests/exit.php" (show $ [PHPCode (Seq [Exit])]))
+            , testCase "Comma separated arrays" (testFile "tests/comma_sep_arrays.php" (show $ [PHPCode (Seq [Expression (Assign (PHPVariable "a") (Array (PHPArray (fromList [(PHPArrayKeyInt 0,Literal (PHPInt 1)),(PHPArrayKeyInt 1,Literal (PHPInt 2)),(PHPArrayKeyInt 2,Literal (PHPInt 3))]))))])]))
             ]
 
 testFile :: FilePath -> String -> IO ()

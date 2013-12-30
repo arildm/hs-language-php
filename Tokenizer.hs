@@ -20,6 +20,7 @@ data FunctionCall = FunctionCall String | FunctionCallVar PHPVariable deriving (
 
 data PHPExpr = Literal PHPValue
              | Variable PHPVariable
+             | Constant String
              | Assign PHPVariable PHPExpr
              | Neg PHPExpr
              | Not PHPExpr
@@ -69,7 +70,7 @@ data PHPStmt = Seq [PHPStmt]
 langDef = emptyDef { Token.commentStart = "/*"
                    , Token.commentEnd = "*/"
                    , Token.commentLine = "//"
-                   , Token.identStart = letter
+                   , Token.identStart = letter <|> char '_'
                    , Token.identLetter = alphaNum <|> char '_'
                    , Token.reservedNames = [ "if", "else", "elseif", "while", "break", "do", "for", "continue"
                                            , "true", "false", "null", "and", "or", "class", "function", "return"
@@ -279,6 +280,7 @@ phpTerm = parens phpExpression
        <|> try printExpr
        <|> try functionCallExpr
        <|> try assignExpr
+       <|> try constExpr
        <|> variableExpr
        <|> liftM Literal phpValue
 
@@ -287,6 +289,9 @@ issetExpr = do
     reserved "isset"
     vars <- parens $ sepBy1 plainVariableExpr (Token.symbol lexer ",")
     return $ Isset vars
+
+constExpr :: Parser PHPExpr
+constExpr = identifier >>= return . Constant
 
 variableExpr :: Parser PHPExpr
 variableExpr = do

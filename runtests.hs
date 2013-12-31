@@ -61,6 +61,8 @@ testSuite = testGroup "Parser"
             , testCase "Unary prefix ops" (testFile "tests/unary_prefix_ops.php" (show $ [PHPCode (Seq [Expression (UnaryExpr Before Increment (PHPVariable "bar")),Expression (UnaryExpr Before Decrement (PHPVariable "foo"))])]))
             , testCase "Unary postfix ops" (testFile "tests/unary_postfix_ops.php" (show $ [PHPCode (Seq [Expression (UnaryExpr After Increment (PHPVariable "bar")),Expression (UnaryExpr After Decrement (PHPVariable "foo"))])]))
             , testCase "Constant" (testFile "tests/const.php" (show $ [PHPCode (Seq [Constant "a"])]))
+            , testCase "Control structure alternative syntax"
+              (testFile "tests/costr_alt.php" (show $ [PHPCode (Seq [While (Literal (PHPBool True)) (Seq []),If (Literal (PHPBool True)) (Seq []) Nothing])]))
             ]
 
 testFile :: FilePath -> String -> IO ()

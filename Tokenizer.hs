@@ -73,6 +73,7 @@ langDef = emptyDef { Token.commentStart = "/*"
                    , Token.identStart = letter <|> char '_'
                    , Token.identLetter = alphaNum <|> char '_'
                    , Token.reservedNames = [ "if", "else", "elseif", "while", "break", "do", "for", "continue"
+                                           , "endif", "endwhile"
                                            , "true", "false", "null", "and", "or", "class", "function", "return"
                                            , "<?php", "?>", "echo", "print"
                                            ]
@@ -205,7 +206,7 @@ whileStmt :: Parser PHPStmt
 whileStmt = do
     reserved "while"
     cond <- parens phpExpression
-    stmt <- (braces statementZeroOrMore) <|> oneStatement
+    stmt <- braces statementZeroOrMore <|> costrAlt "while" <|> oneStatement
     return $ While cond stmt
 
 forStmt :: Parser PHPStmt
@@ -225,7 +226,7 @@ ifStmt :: Parser PHPStmt
 ifStmt = do
     reserved "if"
     cond <- parens phpExpression
-    stmt1 <- (braces statementZeroOrMore) <|> oneStatement
+    stmt1 <- braces statementZeroOrMore <|> costrAlt "if" <|> oneStatement
     cont <- optionMaybe (elseIfStmt <|> elseStmt)
     return $ If cond stmt1 cont
 
@@ -242,6 +243,14 @@ elseIfStmt = do
     stmt <- (braces statementZeroOrMore) <|> oneStatement
     cont <- optionMaybe (elseIfStmt <|> elseStmt)
     return $ ElseIf cond stmt cont
+
+costrAlt :: String -> Parser PHPStmt
+costrAlt costr = do
+    reserved ":"
+    stmt <- statementZeroOrMore
+    reserved $ "end" ++ costr
+    semi
+    return stmt
 
 assignExpr :: Parser PHPExpr
 assignExpr = do
